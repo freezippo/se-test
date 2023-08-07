@@ -1,0 +1,68 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: setup-scraper-ops
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      name: setup-scraper-ops
+    spec:
+      imagePullSecrets:
+      - name: docker-hub    
+      containers:
+      - name: setup-scraper-ops
+        image: freezippo/scraper_ops:latest
+        args: ["rake db:create && rake db:migrate"]
+        env:
+        - name: SCRAPER_OPS_DATABASE_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: scraper-ops
+              key: scraper_ops_database_name     
+        - name: SCRAPER_OPS_DATABASE_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: scraper-ops
+              key: scraper_ops_database_host                 
+        - name: SCRAPER_OPS_DATABASE_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: scraper-ops
+              key: scraper_ops_database_port              
+        - name: SCRAPER_OPS_DATABASE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: pg-db-data
+              key: username
+        - name: SCRAPER_OPS_DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pg-db-data
+              key: password       
+        - name: RAILS_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: scraper-ops
+              key: rails_app    
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: scraper-ops
+              key: redis_host    
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: scraper-ops
+              key: redis_port             
+        - name: RABBITMQ_USER
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-data
+              key: username
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-data
+              key: password                  
+      restartPolicy: Never

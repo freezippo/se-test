@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  labels:
+    app: worker 
+    pool: scraper_worker    
+spec:
+  selector:
+    matchLabels:
+      app: worker
+      pool: scraper_worker    
+  template:
+    metadata:
+      name: worker
+      labels:
+        app: worker
+        pool: scraper_worker    
+    spec:
+      imagePullSecrets:
+      - name: docker-hub    
+      containers:
+      - name: worker
+        image: freezippo/scraper_worker:latest
+        args: ["sneakers work Processor --require lib/sneaker.rb"]
+        env:
+        - name: SCRAPER_OPS_DATABASE_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: scraper-ops
+              key: scraper_ops_database_name     
+        - name: SCRAPER_OPS_DATABASE_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: scraper-ops
+              key: scraper_ops_database_host                 
+        - name: SCRAPER_OPS_DATABASE_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: scraper-ops
+              key: scraper_ops_database_port              
+        - name: SCRAPER_OPS_DATABASE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: pg-db-data
+              key: username
+        - name: SCRAPER_OPS_DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pg-db-data
+              key: password       
+        - name: RACK_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: scraper-ops
+              key: rails_app    
+        - name: RABBITMQ_USER
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-data
+              key: username
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-data
+              key: password                  
+        - name: RABBITMQ_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: scraper-ops
+              key: rabbitmq_host   
+        - name: RABBITMQ_VHOST
+        - name: RABBITMQ_VHOST
+          valueFrom:
+            configMapKeyRef:
+              name: scraper-ops
+              key: rabbitmq_vhost               
+        - name: RABBITMQ_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: scraper-ops
+              key: rabbitmq_port                    

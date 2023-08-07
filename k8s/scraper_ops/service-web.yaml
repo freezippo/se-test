@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  labels:
+    app: web 
+    pool: scraper_ops       
+spec:
+  ports:
+    - name: http
+      port: 3000
+      protocol: TCP
+      targetPort: http
+  selector:
+    app: web 
+    pool: scraper_ops   

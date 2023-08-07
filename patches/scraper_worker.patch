@@ -1,0 +1,90 @@
+diff --color -uarN original_apps/scraper_worker/.dockerignore apps/scraper_worker/.dockerignore
+--- original_apps/scraper_worker/.dockerignore	1970-01-01 03:00:00
++++ apps/scraper_worker/.dockerignore	2023-08-07 20:42:49
+@@ -0,0 +1,3 @@
++.git
++Dockerfile
++Dockerfile.*
+diff --color -uarN original_apps/scraper_worker/config/database.yml apps/scraper_worker/config/database.yml
+--- original_apps/scraper_worker/config/database.yml	2023-07-26 11:53:29
++++ apps/scraper_worker/config/database.yml	2023-08-07 20:46:45
+@@ -4,7 +4,14 @@
+   # For details on connection pooling, see Rails configuration guide
+   # https://guides.rubyonrails.org/configuring.html#database-pooling
+   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
++  host: <%= ENV["SCRAPER_OPS_DATABASE_HOST"] %>
++  port:  <%= ENV["SCRAPER_OPS_DATABASE_PORT"] %>
++  database: <%= ENV["SCRAPER_OPS_DATABASE_NAME"] %>
++  username: <%= ENV["SCRAPER_OPS_DATABASE_USERNAME"] %>
++  password: <%= ENV["SCRAPER_OPS_DATABASE_PASSWORD"] %>
+ 
+ development:
+   <<: *default
+-  database: scraper_ops_development
+\ No newline at end of file
++
++production:
++  <<: *default
+\ No newline at end of file
+diff --color -uarN original_apps/scraper_worker/config/mq_configuration.rb apps/scraper_worker/config/mq_configuration.rb
+--- original_apps/scraper_worker/config/mq_configuration.rb	2023-07-26 14:31:33
++++ apps/scraper_worker/config/mq_configuration.rb	2023-08-07 20:44:53
+@@ -1,5 +1,5 @@
+ class MqConfiguration
+-  DB_CONFIG = YAML.load_file(File.expand_path('../sneakers.yml', __FILE__))[ENV['RACK_ENV']]
++  DB_CONFIG = YAML.load(ERB.new(File.read(File.expand_path('../sneakers.yml', __FILE__))).result)[ENV['RACK_ENV']]
+ 
+   class << self
+     def username
+diff --color -uarN original_apps/scraper_worker/config/sneakers.yml apps/scraper_worker/config/sneakers.yml
+--- original_apps/scraper_worker/config/sneakers.yml	2023-07-26 14:32:47
++++ apps/scraper_worker/config/sneakers.yml	2023-08-07 22:44:25
+@@ -1,10 +1,10 @@
+ template: &template
+-  username:       'guest'
+-  password:       'guest'
+-  host:           '0.0.0.0'
+-  port:           5672
++  username:       <%= ENV.fetch("RABBITMQ_USER") { guest } %>
++  password:       <%= ENV.fetch("RABBITMQ_PASSWORD") { guest } %>
++  host:           <%= ENV.fetch("RABBITMQ_HOST") { localhost } %>
++  port:           <%= ENV.fetch("RABBITMQ_PORT") { 5672 } %> 
+   max_priority:   255
+-  vhost:          '/'
++  vhost:          <%= ENV.fetch("RABBITMQ_VHOST") { '/' } %>
+   exchange:       'sneakers'
+   exchange_type:  :direct
+   heartbeat:       30
+@@ -22,7 +22,10 @@
+   pid_path:       'tmp/pids/sneakers.pid'
+ 
+   queue:
+-    subscribe: 'scraper'
++    subscribe: <%= ENV.fetch("RABBITMQ_QUEUE") { 'scraper'' } %>
+ 
+ development:
+-  <<: *template
++  <<: *template
++
++production:
++  <<: *template
+\ No newline at end of file
+diff --color -uarN original_apps/scraper_worker/docker-entrypoint.sh apps/scraper_worker/docker-entrypoint.sh
+--- original_apps/scraper_worker/docker-entrypoint.sh	1970-01-01 03:00:00
++++ apps/scraper_worker/docker-entrypoint.sh	2023-08-07 20:51:39
+@@ -0,0 +1,14 @@
++#!/bin/bash
++
++set -e
++
++if [ -z "$SCRAPER_OPS_DATABASE_HOST" ]; then
++    echo "SCRAPER_OPS_DATABASE_HOST env variable is not defined"
++    exit 1
++fi 
++
++echo "Waiting for PostgreSQL to start..."
++while ! nc -z $SCRAPER_OPS_DATABASE_HOST 5432; do sleep 0.1; done
++echo "PostgreSQL is up"
++
++exec bundle exec "$@"
+\ No newline at end of file

@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-configmap
+  labels:
+    app: rabbitmq  
+data:
+  definitions.json: |-
+    {
+      "bindings": [
+        {
+          "arguments": {},
+          "destination": "scraper",
+          "destination_type": "queue",
+          "routing_key": "scraper",
+          "source": "sneakers",
+          "vhost": "/"
+        }
+      ],
+      "exchanges": [
+        {
+          "arguments": {},
+          "auto_delete": false,
+          "durable": true,
+          "name": "sneakers",
+          "type": "direct",
+          "vhost": "/"
+        }
+      ],
+      "global_parameters": [],
+      "parameters": [],
+      "permissions": [
+        {
+          "configure": ".*",
+          "read": ".*",
+          "user": "myuser",
+          "vhost": "/",
+          "write": ".*"
+        },
+        {
+          "configure": ".*",
+          "read": ".*",
+          "user": "guest",
+          "vhost": "/",
+          "write": ".*"
+        }
+      ],
+      "policies": [],
+      "queues": [
+        {
+          "arguments": {},
+          "auto_delete": false,
+          "durable": true,
+          "name": "scraper",
+          "type": "classic",
+          "vhost": "/"
+        }
+      ],
+      "rabbit_version": "3.12.2",
+      "rabbitmq_version": "3.12.2",
+      "topic_permissions": [],
+      "users": [
+        {
+          "hashing_algorithm": "rabbit_password_hashing_sha256",
+          "limits": {},
+          "name": "guest",
+          "password_hash": "XNs/qNhYLdTBDquiS+tO6Wj+lZO5GjmlIIZTnt1Cwatlthzu",
+          "tags": [
+            "administrator"
+          ]
+        },
+        {
+          "hashing_algorithm": "rabbit_password_hashing_sha256",
+          "limits": {},
+          "name": "myuser",
+          "password_hash": "6vM9FEuUCL30y59ifuWMT2v8VOa5LBS/CF+N4qAcA4ZxLJHf",
+          "tags": []
+        }
+      ],
+      "vhosts": [
+        {
+          "limits": [],
+          "metadata": {
+            "description": "Default virtual host",
+            "tags": []
+          },
+          "name": "/"
+        }
+      ]
+    }
+  enabled_plugins: '[rabbitmq_peer_discovery_k8s, rabbitmq_management].'
+  rabbitmq.conf: |-
+    listeners.tcp.default = 5672
+    management.tcp.port = 15672
+    management.load_definitions = /etc/rabbitmq/definitions.json

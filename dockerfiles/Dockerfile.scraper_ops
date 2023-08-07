@@ -1,0 +1,21 @@
+FROM freezippo/ruby:3.1.0
+
+RUN mkdir /app
+WORKDIR /app 
+
+ADD Gemfile /app 
+ADD Gemfile.lock /app 
+
+ENV DEPS="bash tzdata" DEV_DEPS="build-base postgresql-dev  zlib-dev libxml2-dev libxslt-dev readline-dev git nodejs"
+
+RUN apk add --update --upgrade $DEPS $DEV_DEPS && \
+    bundle install && \
+    cp /usr/share/zoneinfo/UTC /etc/localtime && \
+    echo "UTC" >  /etc/timezone && \
+    apk del $DEV_DEPS && \
+    apk add libpq && \
+    rm -rf /var/cache/apk/*  && \
+    rm -rf /usr/lib/ruby/gems/*/cache/*;
+
+COPY . .
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
