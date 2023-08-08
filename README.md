@@ -17,6 +17,8 @@ apply patches
 cd original_apps
 patch -p1  < ../se-test/patches/scraper_ops.patch
 patch -p1  < ../se-test/patches/scraper_worker.patch
+chmod +x scraper_ops/docker-entrypoint.sh
+chmod +x scraper_worker/docker-entrypoint.sh
 ```
 
 ## Build docker images
@@ -34,7 +36,7 @@ kubectl apply -n se-test -f configmap-scraper-ops.yaml
 
 kubectl create secret docker-registry docker-hub -n se-test --docker-server=https://index.docker.io/v1/ --docker-username=freezippo --docker-password=xxxx --docker-email=xxx
 kubectl create secret generic pg-db-data -n se-test --from-literal=password=se_pg_passw0rd --from-literal=username=postgres
-kubectl create secret generic rabbitmq-data -n se-test --from-literal=password=myuser --from-literal=username=mypassw0rd
+kubectl create secret generic rabbitmq-data -n se-test --from-literal=username=myuser --from-literal=password=mypassw0rd
 
 kubectl apply -n se-test -f k8s/postgresql/.
 kubectl apply -n se-test -f k8s/rabbitmq/.
